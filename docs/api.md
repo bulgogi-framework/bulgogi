@@ -29,15 +29,77 @@ REGISTER_VIEW(ping) {
 
 This binds `/ping` to the handler above.
 
-#### Supported macros:
+---
 
-| Macro                          | URL Path       | Notes                 |
-|--------------------------------|----------------|-----------------------|
-| `REGISTER_VIEW(ping)`          | `/ping`        | Normal route          |
-| `REGISTER_ROOT_VIEW(main)`     | `/`            | Root fallback (debug) |
-| `REGISTER_VIEW(api, user, id)` | `/api/user/id` | Multi-part route      |
+### 🔁 `REGISTER_VIEW_URLS` — Explicit Route Binding
+
+```c++
+REGISTER_VIEW_URLS(my_handler,
+    "user-info",
+    "user_info",
+    "user/info"
+) {
+    // handler code
+}
+```
+
+Use this macro when:
+
+* ✅ Your URL path contains characters that can't appear in function names (e.g. `-`)
+* ✅ You want **multiple equivalent routes** to point to the same handler
+* ✅ You need a path with **more than 5 segments** (which `REGISTER_VIEW(...)` does not support)
+
+#### Key Differences vs `REGISTER_VIEW(...)`:
+
+| Feature                           | `REGISTER_VIEW(...)` | `REGISTER_VIEW_URLS(...)` |
+|-----------------------------------|----------------------|---------------------------|
+| Function name auto-mapped to path | ✅ Yes                | ❌ Manual only             |
+| Supports `-` in URL path          | ❌ No                 | ✅ Yes                     |
+| Supports more than 5 segments     | ❌ No (1–5 max)       | ✅ Unlimited               |
+| Multiple equivalent paths         | ❌ One path only      | ✅ Multi-path registration |
+| Easier to read for custom routes  | 🚫 Limited           | ✅ Recommended for aliases |
+
+#### Example: Route with hyphen and slashes
+
+```c++
+REGISTER_VIEW_URLS(get_user_info,
+    "user-info",     // kebab-case alias
+    "user_info",     // snake_case
+    "user/info"      // REST-style
+) {
+    if (!bulgogi::check_method(req, bulgogi::http::verb::get, res)) return;
+    std::string id = bulgogi::get_query_param(req, "id").value_or("unknown");
+    bulgogi::set_json(res, {{"user", id}});
+}
+```
+
+---
+
+💡 Tip: You can mix `REGISTER_VIEW(...)` for simple routes and `REGISTER_VIEW_URLS(...)` for special cases.
+
+
+### Supported macros:
+
+| Macro                             | URL Path       | Notes                                |
+|-----------------------------------|----------------|--------------------------------------|
+| `REGISTER_VIEW(ping)`             | `/ping`        | Normal route                         |
+| `REGISTER_ROOT_VIEW(main)`        | `/`            | Root fallback (debug)                |
+| `REGISTER_VIEW(api, user, id)`    | `/api/user/id` | Multi-part route                     |
+| `REGISTER_VIEW_URLS(f, paths...)` | Custom         | Manual control, aliases, `-` support |
 
 Multi-part routes are joined with `/`, and function name becomes `api__user__id`.
+
+### 🧠 When to Use Which Macro?
+
+Use this table to decide which macro to use:
+
+| Use Case                                   | Recommended Macro         |
+|--------------------------------------------|---------------------------|
+| Simple routes, function name matches       | `REGISTER_VIEW(...)`      |
+| Root path `/`                              | `REGISTER_ROOT_VIEW(...)` |
+| URL has `-` or doesn't match function name | `REGISTER_VIEW_URLS(...)` |
+| Multiple equivalent routes                 | `REGISTER_VIEW_URLS(...)` |
+| Deep routes (> 5 segments)                 | `REGISTER_VIEW_URLS(...)` |
 
 ---
 

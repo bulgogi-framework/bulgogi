@@ -36,6 +36,46 @@ namespace views {
         void ROUTE_NAME(__VA_ARGS__)(const bulgogi::Request& req, bulgogi::Response& res)
 
     /**
+     * @brief Register one or more URL paths for a single handler function.
+     *
+     * This macro allows you to explicitly map multiple URL strings to a single handler.
+     * It is useful when:
+     * - You want to support "alias" routes (e.g., "user-info" and "user_info").
+     * - The route string does not directly match the function name. (contains "-")
+     * - You prefer manual control over automatic path generation.
+     *
+     * Usage:
+     * - The first argument is the handler function name (which will be defined below).
+     * - The remaining arguments are C-style string literals (e.g., "api/v1/info").
+     * - Paths should NOT start with a leading slash ("/") — they are stored as-is.
+     *
+     * Example:
+     * @code
+     * REGISTER_VIEW_URLS(handle_user_info,
+     *     "user-info",
+     *     "user_info",
+     *     "user/info"
+     * ) {
+     *     // your handler implementation here
+     * }
+     * @endcode
+     *
+     * Notes:
+     * - This macro ensures the handler function is defined only once.
+     * - Route conflicts are resolved by last-in-wins in the global function_map.
+     * - You may mix this with REGISTER_VIEW() for full flexibility.
+     */
+#define REGISTER_VIEW_URLS(func_name, ...) \
+        void func_name(const bulgogi::Request& req, bulgogi::Response& res); \
+        struct func_name##_alias_registrar { \
+            func_name##_alias_registrar() { \
+                const char* paths[] = { __VA_ARGS__ }; \
+                for (const auto& p : paths) views::function_map[p] = func_name; \
+            } \
+        } func_name##_alias_registrar_instance; \
+        void func_name(const bulgogi::Request& req, bulgogi::Response& res)
+
+    /**
      * @brief Register the handler for the root URL path ("/").
      *
      * This macro maps the given function to the root route `""`.
@@ -48,19 +88,15 @@ namespace views {
      *     - Use a different function name (e.g., `my_root`), or
      *     - Remove or comment out `default_root` in `views.cpp`.
      *
-     * @example
+     * Example:
+     * @code
      * REGISTER_ROOT_VIEW(my_root) {
      *         if (!check_method(req, bulgogi::http::verb::get, res)) return;
-     *         bulgogi::set_html(res, <your_html_str>, 200);
+     *         bulgogi::set_html(res, your_html_str, 200);
      * }
+     * @endcode
      */
-#define REGISTER_ROOT_VIEW(func_name) \
-        void func_name(const bulgogi::Request& req, bulgogi::Response& res); \
-        struct func_name##_root_registrar { \
-            func_name##_root_registrar() { views::function_map[""] = func_name; } \
-        } func_name##_root_registrar_instance; \
-        void func_name(const bulgogi::Request& req, bulgogi::Response& res)
-
+#define REGISTER_ROOT_VIEW(func_name) REGISTER_VIEW_URLS(func_name, "")
 }
 
 namespace views {
