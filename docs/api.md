@@ -140,6 +140,62 @@ auto name = bulgogi::get_query_param(req, "q");    // Extracts ?q= from URL
 
 ---
 
+### ⚙️ `views.cpp` Custom Hooks
+
+You may optionally implement the following functions in `views.cpp` to add global logic:
+
+```c++
+namespace views {
+    void init();   // Called once during startup
+    void atexit(); // Called once on shutdown
+    void check_head(const bulgogi::Request& req); // Called before CORS headers are applied
+}
+```
+
+#### 🔸 `void views::init()`
+
+```c++
+void views::init() {
+    /// Todo: Add initialization code if needed (e.g. DB connections, logging setup)
+}
+```
+
+Called **once during application startup**, before any routes are registered.
+
+---
+
+#### 🔸 `void views::atexit()`
+
+```c++
+void views::atexit() {
+    /// Todo: Add cleanup code if needed (e.g. closing resources)
+}
+```
+
+Called **once at shutdown**, before exiting the application.
+
+---
+
+#### 🔸 `void views::check_head(const bulgogi::Request& req)`
+
+```c++
+void views::check_head([[maybe_unused]] const bulgogi::Request& req) {
+    /// Todo: Implement global CORS/token validation if needed
+    // Example: throw std::runtime_error("Unauthorized") if missing Authorization
+}
+```
+
+Called automatically in `bulgogi::apply_cors()`.
+
+* Throw an exception here to **block unauthorized requests**.
+* The framework will catch it and return a `401 Unauthorized` response automatically.
+
+---
+
+> ✅ These are **optional**. Empty implementations are valid.
+
+---
+
 ### 📥 Download Support
 
 Download text as a file with content-type:

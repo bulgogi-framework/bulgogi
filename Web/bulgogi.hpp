@@ -4,12 +4,21 @@
 #include <boost/json.hpp>
 #include <jh/pod>
 
+
 namespace bulgogi {
     namespace beast = boost::beast;
     namespace http = beast::http;
-
     using Request = http::request<http::string_body>;
     using Response = http::response<http::string_body>;
+
+}
+
+namespace views{
+    /// @brief Check if the request method matches the expected method
+    void check_head(const bulgogi::Request &req);
+}
+
+namespace bulgogi {
 
     [[maybe_unused]] inline bool is_json(const Request &req) {
         return req[http::field::content_type].starts_with("application/json");
@@ -46,6 +55,7 @@ namespace bulgogi {
 
     template<jh::pod::array<char, 32> Mime>
     struct [[maybe_unused]] set_download {
+        [[maybe_unused]]
         static void apply(Response &res, std::string_view content, const std::string &filename) { // NOLINT
             res.result(http::status::ok);
             res.set(http::field::content_type, "text/" + std::string(Mime.data));
@@ -83,7 +93,15 @@ namespace bulgogi {
         res.prepare_payload();
     }
 
-    inline void apply_cors(bulgogi::Response &res, std::string_view allow_origin = "*") {
+    inline void apply_cors(const Request &req, bulgogi::Response &res, std::string_view allow_origin = "*") {
+        try {
+            views::check_head(req);
+        } catch (const std::exception &e) {
+            // Unauthorized
+            set_text(res, std::string("Unauthorized: ") + e.what(), 401);
+            return;
+        }
+
         res.set(http::field::access_control_allow_origin, allow_origin);
         res.set(http::field::access_control_allow_methods, "GET, POST, OPTIONS");
         res.set(http::field::access_control_allow_headers, "Content-Type");
@@ -95,8 +113,6 @@ namespace bulgogi {
         const std::string target = std::string(req.target());
         const std::string_view target_view = target;
         std::string_view query = target_view.substr(target.find('?') + 1); // query = view from owned string
-
-        std::optional<std::string> res;
 
         while (!query.empty()) {
             auto eq = query.find('=');
@@ -111,10 +127,10 @@ namespace bulgogi {
             else query = {};
 
             if (k == key) {
-                return std::string(v); // safe: v from target_view, local variable
+                return std::string(v); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+                // safe: v from target_view, local variable
             }
         }
-
         return std::nullopt;
     }
 

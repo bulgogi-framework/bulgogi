@@ -65,7 +65,7 @@ void handle_request(
             res.version(req.version());
             res.keep_alive(req.keep_alive());
             res.result(http::status::no_content);
-            bulgogi::apply_cors(res);
+            bulgogi::apply_cors(req, res);
         } else {
             bulgogi::set_text(res, "404 Not Found (CORS preflight): " + route, 404);
         }

@@ -52,12 +52,16 @@ REGISTER_ROOT_VIEW(default_root) {
 
 
 void views::init() {
-/// Todo: Add initialization code if needed
+    /// Todo: Add initialization code if needed
 }
 
-
 void views::atexit() {
-/// Todo: Add cleanup code if needed
+    /// Todo: Add cleanup code if needed
+}
+
+void views::check_head([[maybe_unused]] const bulgogi::Request &req) {
+    /// Todo: Implement global check_head logic for cors if needed
+    // Example: throw std::runtime_error("Unauthorized") if missing Authorization
 }
 
 
