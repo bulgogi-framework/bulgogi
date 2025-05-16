@@ -1,0 +1,58 @@
+# macOS system file
+**/.DS_Store
+
+# Windows system files
+**/Thumbs.db
+**/desktop.ini
+
+# Linux/Unix temporary swap files (root level only)
+*~
+.*.swp
+.*.swo
+
+# VS Code settings
+.vscode/
+*.code-workspace
+
+# JetBrains IDE settings
+.idea/
+
+# Markdown editor temp/backup files
+*.bak.md
+*.tmp.md
+*.md~
+*.preview.md
+
+# Generic temp/backup files
+*.bak
+*.tmp
+*.temp
+*.old
+*.orig
+
+# Ignore all Markdown files (README, docs, etc.)
+**/*.md
+
+# Build artifacts (case-insensitive variants)
+**/*build*
+**/*Build*
+**/*BUILD*
+
+# Dist artifacts
+**/*dist*
+
+# Test artifacts
+**/*test*
+**/*Test*
+**/*TEST*
+
+# Documentation and Docker files
+docs/
+docker/
+
+# Ignore version control and ignore files themselves
+.git/
+.gitignore
+.dockerignore
+
+LICENSE

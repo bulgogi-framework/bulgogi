@@ -1,0 +1,40 @@
+# macOS system file
+**/.DS_Store
+
+# Windows system files
+**/Thumbs.db
+**/desktop.ini
+
+# Linux/Unix temporary swap files (at root level)
+/*~
+/.*.swp
+/.*.swo
+
+# VS Code settings folder
+/.vscode/
+/*.code-workspace
+
+# JetBrains IDE settings
+/.idea/
+
+# Markdown editor backups and temp files
+/*.bak.md
+/*.tmp.md
+/*.md~
+/*.preview.md
+
+# Generic temp/backup files at root level
+/*.bak
+/*.tmp
+/*.temp
+/*.old
+/*.orig
+
+# build
+**/*build*/
+**/*Build*/
+**/*BUILD*/
+
+
+# dist
+**/*dist*
