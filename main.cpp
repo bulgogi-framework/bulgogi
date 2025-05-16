@@ -1,6 +1,7 @@
 // main.cpp
 
-#define STR(x) #x
+#define STR_INNER(x) #x
+#define STR(x) STR_INNER(x)
 
 #include <boost/beast.hpp>
 #include <boost/asio.hpp>
