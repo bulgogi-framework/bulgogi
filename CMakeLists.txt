@@ -15,7 +15,21 @@ if(NOT DEFINED PORT)
     set(PORT 8080)
 endif()
 
+if(NOT PORT MATCHES "^[0-9]+$")
+    message(FATAL_ERROR "PORT must be a number")
+endif()
+
+if(PORT LESS 1 OR PORT GREATER 65535)
+    message(FATAL_ERROR "PORT must be between 1 and 65535")
+endif()
+
+# ==== TIMEOUT ====
+if(NOT DEFINED TIMEOUT)
+    set(TIMEOUT 10)
+endif()
+
 add_compile_definitions(PORT=${PORT})
+add_compile_definitions(TIMEOUT=${TIMEOUT})
 
 # ==== Compiler flags ====
 set(EXTRA_OPT_FLAGS "")

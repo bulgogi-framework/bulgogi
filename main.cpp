@@ -1,8 +1,5 @@
 // main.cpp
 
-#define STR_INNER(x) #x
-#define STR(x) STR_INNER(x)
-
 #include <boost/beast.hpp>
 #include <boost/asio.hpp>
 #include <boost/json.hpp>
@@ -100,12 +97,24 @@ void do_session(tcp::socket socket,
     try {
         beast::flat_buffer buffer;
         http::request<http::string_body> req;
-        http::read(socket, buffer, req);
+
+        beast::tcp_stream stream(std::move(socket));
+        stream.expires_after(std::chrono::seconds(TIMEOUT));
+
+        http::read(stream, buffer, req);
+
+        if (g_should_exit) return;
 
         http::response<http::string_body> res;
         handle_request(*route_map, req, res);
 
-        http::write(socket, res);
+        http::write(stream, res);
+
+        beast::error_code ec;
+
+        if (socket.shutdown(tcp::socket::shutdown_send, ec)) {
+            std::cerr << "Shutdown failed: " << ec.message() << std::endl;
+        }
     } catch (const beast::system_error &e) {
         if (!g_should_exit && e.code() != http::error::partial_message) {
             if (e.code() == http::error::end_of_stream) {

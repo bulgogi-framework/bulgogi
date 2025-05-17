@@ -19,3 +19,14 @@
 
 #define PASTE(a, b) a##b
 #define EXPAND(a, b) PASTE(a, b)
+
+#define STR_INNER(x) #x
+#define STR(x) STR_INNER(x)
+
+#ifndef TIMEOUT
+#define TIMEOUT 5
+#endif
+
+#ifndef PORT
+#define PORT 8080
+#endif
