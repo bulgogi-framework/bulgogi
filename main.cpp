@@ -31,7 +31,7 @@ void handle_signal(const int signal) {
     if (signal == SIGTERM || signal == SIGINT) {
         if (global_acceptor) {
             boost::system::error_code ec;
-            auto err = global_acceptor->cancel(ec);
+            auto err = global_acceptor->close(ec);
             (void) err;
         }
     }
@@ -110,11 +110,15 @@ void do_session(tcp::socket socket,
 
         http::write(stream, res);
 
-        beast::error_code ec;
+        boost::system::error_code ec;
+        auto& sock = stream.socket();
 
-        if (socket.shutdown(tcp::socket::shutdown_send, ec)) {
+        const auto& result = sock.shutdown(tcp::socket::shutdown_send, ec);
+        // Reference of ec, nodiscard
+        if (result && result != boost::asio::error::not_connected) {
             std::cerr << "Shutdown failed: " << ec.message() << std::endl;
         }
+
     } catch (const beast::system_error &e) {
         if (!g_should_exit && e.code() != http::error::partial_message) {
             if (e.code() == http::error::end_of_stream) {
@@ -135,8 +139,6 @@ void do_session(tcp::socket socket,
 int main() {
     std::signal(SIGINT, handle_signal);
     std::signal(SIGTERM, handle_signal);
-    std::atexit(views::atexit);
-
     views::init();
 
     auto route_map = std::make_shared<std::unordered_map<std::string, views::HandlerFunc>>(build_route_map());
@@ -189,9 +191,12 @@ int main() {
         }
 
         std::cout << "\U0001F44B Server exiting, cleaning up...\n";
+        views::atexit();
 
     } catch (std::exception &e) {
         std::cerr << "Error: " << e.what() << std::endl;
+        views::atexit();
+        // Fallback to clean-up if exception occurs
         return 1;
     }
 
