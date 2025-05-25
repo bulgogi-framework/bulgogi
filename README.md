@@ -14,6 +14,16 @@
   </a>
 </p>
 
+<p align="center">
+  <a href="https://github.com/bulgogi-framework/bulgogi/blob/main/README.zh-hans.md">
+    <img src="https://raw.githubusercontent.com/bulgogi-framework/.github/main/res/img/badge_zh-hans.svg" alt="Back to README"/>
+  </a>
+
+  <a href="https://github.com/bulgogi-framework/bulgogi/blob/main/README.ko-cn.md">
+    <img src="https://raw.githubusercontent.com/bulgogi-framework/.github/main/res/img/badge_ko-cn.svg" alt="Back to README"/>
+  </a>
+</p>
+
 ---
 [![C++20](https://img.shields.io/badge/C%2B%2B-20-violet.svg)](https://en.cppreference.com/w/cpp/20)
 [![Boost](https://img.shields.io/badge/Boost-1.88-blue.svg)](https://www.boost.org/)
