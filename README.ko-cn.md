@@ -22,6 +22,8 @@
 
 ---
 
+<div align="center">
+
 [![C++20](https://img.shields.io/badge/C%2B%2B-20-violet.svg)](https://en.cppreference.com/w/cpp/20)
 [![Boost](https://img.shields.io/badge/Boost-1.88-blue.svg)](https://www.boost.org/)
 [![jh-toolkit](https://img.shields.io/badge/jh--toolkit-1.3.x--LTS-brightgreen)](https://github.com/JeongHan-Bae/JH-Toolkit/tree/1.3.x-LTS)
@@ -31,7 +33,7 @@
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Contributors](https://img.shields.io/github/contributors/bulgogi-framework/bulgogi.svg)](https://github.com/bulgogi-framework/bulgogi/graphs/contributors)
 
----
+</div>
 
 _이 문서는 주로 중국 지역의 조선족 독자를 위해 '우리말' 기준 표현을 중심으로 작성되었습니다._  
 _서울말 사용자에게는 일부 어휘나 표기가 익숙하지 않을 수 있으며,_  

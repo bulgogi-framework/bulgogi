@@ -14,17 +14,17 @@
   </a>
 </p>
 
-<p align="center">
-  <a href="https://github.com/bulgogi-framework/bulgogi/blob/main/README.zh-hans.md">
-    <img src="https://raw.githubusercontent.com/bulgogi-framework/.github/main/res/img/badge_zh-hans.svg" alt="Back to README"/>
-  </a>
+<div align="center">
 
-  <a href="https://github.com/bulgogi-framework/bulgogi/blob/main/README.ko-cn.md">
-    <img src="https://raw.githubusercontent.com/bulgogi-framework/.github/main/res/img/badge_ko-cn.svg" alt="Back to README"/>
-  </a>
-</p>
+[![zh-hans](https://raw.githubusercontent.com/bulgogi-framework/.github/main/res/img/badge_zh-hans.svg)](https://github.com/bulgogi-framework/bulgogi/blob/main/README.zh-hans.md)
+[![ko-cn](https://raw.githubusercontent.com/bulgogi-framework/.github/main/res/img/badge_ko-cn.svg)](https://github.com/bulgogi-framework/bulgogi/blob/main/README.ko-cn.md)
+
+</div>
 
 ---
+
+<div align="center">
+
 [![C++20](https://img.shields.io/badge/C%2B%2B-20-violet.svg)](https://en.cppreference.com/w/cpp/20)
 [![Boost](https://img.shields.io/badge/Boost-1.88-blue.svg)](https://www.boost.org/)
 [![jh-toolkit](https://img.shields.io/badge/jh--toolkit-1.3.x--LTS-brightgreen)](https://github.com/JeongHan-Bae/JH-Toolkit/tree/1.3.x-LTS)
@@ -34,7 +34,7 @@
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Contributors](https://img.shields.io/github/contributors/bulgogi-framework/bulgogi.svg)](https://github.com/bulgogi-framework/bulgogi/graphs/contributors)
 
---- 
+</div>
 
 ## 🔥 What is Bulgogi?
 
