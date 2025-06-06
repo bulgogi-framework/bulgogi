@@ -69,13 +69,14 @@ void handle_request(
                 bulgogi::set_json(res, {
                         {"error", std::string("CORS preflight rejected: ") + e.what()}
                 }, 403);
-            }
-            bulgogi::apply_cors(res);  // always include CORS headers
+                bulgogi::apply_cors(res);  // optional for visibility
+                return;
+            } // legal, continue to regular request handling to get full cors
         } else {
             bulgogi::set_text(res, "404 Not Found (CORS preflight): " + route, 404);
             bulgogi::apply_cors(res);  // optional for visibility
+            return;
         }
-        return;
     }
 
     // === Regular request handling ===
