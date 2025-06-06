@@ -1,3 +1,5 @@
+/// Copyright (c) 2025 bulgogi-framework
+/// SPDX-License-Identifier: MIT
 // main.cpp
 
 #include <boost/beast.hpp>
@@ -46,50 +48,55 @@ std::unordered_map<std::string, views::HandlerFunc> build_route_map() {
 }
 
 void handle_request(
-        const std::unordered_map<std::string, views::HandlerFunc> &route_map,
-        const http::request<http::string_body> &req,
-        http::response<http::string_body> &res) {
+        const std::unordered_map<std::string, views::HandlerFunc>& route_map,
+        const http::request<http::string_body>& req,
+        http::response<http::string_body>& res) {
 
     res.version(req.version());
     res.keep_alive(req.keep_alive());
 
-    // === CORS: handle all OPTIONS (preflight) ===
-    if (req.method() == http::verb::options) {
-        const std::string target = std::string(req.target());
-        auto query_pos = target.find('?');
-        std::string route = query_pos == std::string::npos ? target : target.substr(0, query_pos);
+    const std::string target = std::string(req.target());
+    const auto query_pos = target.find('?');
+    const std::string route = query_pos == std::string::npos ? target : target.substr(0, query_pos);
 
+    // === Special handling for OPTIONS preflight ===
+    if (req.method() == http::verb::options) {
         if (views::has_route(route)) {
-            res.version(req.version());
-            res.keep_alive(req.keep_alive());
-            res.result(http::status::no_content);
-            bulgogi::apply_cors(req, res);
+            try {
+                views::check_head(req);  // allow filtering on Origin / Headers
+                res.result(http::status::no_content);
+            } catch (const std::exception& e) {
+                bulgogi::set_json(res, {
+                        {"error", std::string("CORS preflight rejected: ") + e.what()}
+                }, 403);
+            }
+            bulgogi::apply_cors(res);  // always include CORS headers
         } else {
             bulgogi::set_text(res, "404 Not Found (CORS preflight): " + route, 404);
+            bulgogi::apply_cors(res);  // optional for visibility
         }
         return;
     }
 
-    const std::string target = std::string(req.target());
-    auto query_pos = target.find('?');
-    std::string route = query_pos == std::string::npos ? target : target.substr(0, query_pos);
-
-    if (auto it = route_map.find(route); it != route_map.end()) {
+    // === Regular request handling ===
+    auto it = route_map.find(route);
+    if (it != route_map.end()) {
         bulgogi::Response hres;
+
         try {
             it->second(req, hres);
-        } catch (const std::exception &e) {
+        } catch (const std::exception& e) {
 #ifndef NDEBUG
-            bulgogi::set_json(hres, {{"error", e.what()}}, 400); // Debug: treat as client-side issue
+            bulgogi::set_json(hres, {{"error", e.what()}}, 400);
 #else
-            bulgogi::set_json(hres, {{"error", "Internal Server Error"}}, 500); // Release: production-safe
+            bulgogi::set_json(hres, {{"error", "Internal Server Error"}}, 500);
 #endif
         }
+
         res = std::move(hres);
     } else {
         bulgogi::set_text(res, "404 Not Found: " + route, 404);
     }
-
 }
 
 void do_session(tcp::socket socket,

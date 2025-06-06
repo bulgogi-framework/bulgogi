@@ -28,8 +28,14 @@ if(NOT DEFINED TIMEOUT)
     set(TIMEOUT 10)
 endif()
 
+# ==== CORS_MAX_AGE ====
+if(NOT DEFINED CORS_MAX_AGE)
+    set(CORS_MAX_AGE 86400)
+endif()
+
 add_compile_definitions(PORT=${PORT})
 add_compile_definitions(TIMEOUT=${TIMEOUT})
+add_compile_definitions(CORS_MAX_AGE=${CORS_MAX_AGE})
 
 # ==== Compiler flags ====
 set(EXTRA_OPT_FLAGS "")

@@ -1,3 +1,6 @@
+/// Copyright (c) 2025 bulgogi-framework
+/// SPDX-License-Identifier: MIT
+
 #pragma once
 
 #define ROUTE_NAME1(a) a
@@ -29,4 +32,8 @@
 
 #ifndef PORT
 #define PORT 8080
+#endif
+
+#ifndef CORS_MAX_AGE
+#define CORS_MAX_AGE 86400
 #endif

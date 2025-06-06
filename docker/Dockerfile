@@ -17,7 +17,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # === Common system dependencies ===
 RUN apt-get update && apt-get install -y \
     wget git curl pkg-config ca-certificates \
-    build-essential cmake ninja-build libmysqlclient-dev \
+    build-essential cmake ninja-build \
     && rm -rf /var/lib/apt/lists/*
 
 # === Conditionally install compiler toolchain ===

@@ -1,3 +1,7 @@
+/// Copyright (c) 2025 bulgogi-framework
+/// SPDX-License-Identifier: MIT
+
+
 #pragma once
 
 #include <string>
