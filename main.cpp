@@ -50,7 +50,8 @@ std::unordered_map<std::string, views::HandlerFunc> build_route_map() {
 void handle_request(
         const std::unordered_map<std::string, views::HandlerFunc>& route_map,
         const http::request<http::string_body>& req,
-        http::response<http::string_body>& res) {
+        http::response<http::string_body>& res,
+        const std::string& remote_ip) {
 
     res.version(req.version());
     res.keep_alive(req.keep_alive());
@@ -85,7 +86,7 @@ void handle_request(
         bulgogi::Response hres;
 
         try {
-            it->second(req, hres);
+            it->second(req, hres, remote_ip);
         } catch (const std::exception& e) {
 #ifndef NDEBUG
             bulgogi::set_json(hres, {{"error", e.what()}}, 400);
@@ -106,6 +107,8 @@ void do_session(tcp::socket socket,
         beast::flat_buffer buffer;
         http::request<http::string_body> req;
 
+        auto remote_ip = socket.remote_endpoint().address().to_string();
+
         beast::tcp_stream stream(std::move(socket));
         stream.expires_after(std::chrono::seconds(TIMEOUT));
 
@@ -114,7 +117,7 @@ void do_session(tcp::socket socket,
         if (g_should_exit) return;
 
         http::response<http::string_body> res;
-        handle_request(*route_map, req, res);
+        handle_request(*route_map, req, res, remote_ip);
 
         http::write(stream, res);
 

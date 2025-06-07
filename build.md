@@ -4,11 +4,12 @@
   </a>
 </p>
 
-
 # 📦 Build & Deployment Guide
 
-> This document explains how to build and run the **`bulgogi` project** under the [`bulgogi-framework`](https://github.com/bulgogi-framework) organization using Docker or native build tools.
-> It supports both **development containers** and **slim production images**, while remaining compatible with local-native builds.
+> This document explains how to build and run the **`bulgogi` project** under the 
+> [`bulgogi-framework`](https://github.com/bulgogi-framework) organization using Docker or native build tools.  
+> It supports both **development containers** and **slim production images**, while remaining compatible with
+> local-native builds.
 
 ---
 
@@ -34,10 +35,8 @@ docker buildx build \
   .
 ```
 
-You may use `--build-arg COMPILER=gcc` to switch to GCC.  
-Use `--platform linux/arm64` if your native architecture is ARM64.  
-You may also use `--no-cache` to force a clean build.  
-You may use `docker build` instead of `docker buildx build` if you are not building on exactly the same architecture as the target.  
+> ✅ Use `--build-arg COMPILER=gcc` to switch toolchains (default is `clang`).  
+> ✅ Use `--platform linux/arm64` for Apple Silicon or ARM servers.
 
 ### ▶️ Run
 
@@ -53,10 +52,10 @@ A **multi-stage minimal runtime image**, ideal for containerized production.
 
 ### ✅ Features
 
-* **Only final executable included**
-* **Statically linked Boost** (no `.so` required at runtime)
-* **Header-only jh-toolkit::pod**, embedded at compile time
-* Final image size: **\~70MB**
+* **Only the final binary is included**
+* **Statically linked Boost**
+* **Header-only `jh-toolkit::pod`**
+* Image size: \~70MB
 
 ### 🔧 Build
 
@@ -78,83 +77,110 @@ docker run --rm -p 8080:8080 bulgogi-app:slim
 
 ---
 
+## ⚙️ 🔧 Build-Time Arguments (for Both Dockerfiles)
+
+The following `--build-arg` options can be passed to both Dockerfiles to control behavior at **build time**.
+
+> ❗ You **must** specify either `-f docker/Dockerfile` or `-f docker/Dockerfile.runtime`.  
+> Running `docker build .` without `-f` will not work correctly.
+
+| Argument       | Default     | Example                         | Description                                                             |
+|----------------|-------------|---------------------------------|-------------------------------------------------------------------------|
+| `COMPILER`     | `clang`     | `--build-arg COMPILER=gcc`      | Compiler toolchain (`clang` or `gcc`). `clang` is officially supported. |
+| `APP`          | `APP`       | `--build-arg APP=MyServer`      | CMake project name and output binary name                               |
+| `PORT`         | `8080`      | `--build-arg PORT=9000`         | Server listening port (compile-time constant)                           |
+| `TIMEOUT`      | `10`        | `--build-arg TIMEOUT=15`        | Request timeout, in seconds                                             |
+| `CORS_MAX_AGE` | `86400`     | `--build-arg CORS_MAX_AGE=3600` | Cache duration for CORS preflight results                               |
+| `NO_CORS`      | `OFF`       | `--build-arg NO_CORS=ON`        | Disables CORS handling (`add_compile_definitions(NO_CORS=1)`)           |
+| `CMAKE_VER`    | `3.27.9`    | `--build-arg CMAKE_VER=3.29.0`  | Override CMake version (⚠ not recommended — compatibility may break)    |
+| `BOOST_VER`    | `1.88.0`    | `--build-arg BOOST_VER=1.85.0`  | Override Boost version (⚠ must include `boost::json`)                   |
+| `JH_BRANCH`    | `1.3.x-LTS` | `--build-arg JH_BRANCH=main`    | Use a different branch of `jh-toolkit`                                  |
+
+---
+
+### 🧠 Recommendation
+
+> For most users, the defaults are tested and stable.  
+> **Do not override `BOOST_VER`, `CMAKE_VER`, or `JH_BRANCH`** unless you know what you're doing — these are pinned for
+> compatibility.
+
+---
+
+### 🧪 Example: Dev Image with CORS Disabled
+
+```bash
+docker build \
+  -f docker/Dockerfile \
+  --build-arg APP=TestServer \
+  --build-arg PORT=9001 \
+  --build-arg NO_CORS=ON \
+  -t bulgogi-dev:custom .
+```
+
+### 🚀 Example: Runtime Image with GCC and Custom App Name
+
+```bash
+docker build \
+  -f docker/Dockerfile.runtime \
+  --build-arg APP=TestServer \
+  --build-arg PORT=9001 \
+  --build-arg COMPILER=gcc \
+  -t bulgogi-app:slim .
+```
+
+---
+
 ## 📁 Build Context & Path Requirements
 
-> 🧭 All `docker build` commands in this document **must be run from the project root directory**.
+All Docker builds must be run from the **project root**:
 
-This is because:
+* ✅ Correct: `docker build -f docker/Dockerfile .`
+* ❌ Incorrect: `cd docker && docker build .`
 
-* The `Dockerfile` is located in the `docker/` subdirectory
-* The Docker build context expects the **entire source tree**
-* Relative paths like `COPY ./ ./` and CMake references to rely on **root-relative layout**
-
-✅ **Do not run builds from inside `docs/` or `docker/`** — the paths will break, and your application may not compile or run correctly.
+Relative paths like `COPY ./ ./` rely on the entire root context.
 
 ---
 
-## ⚙️ `docker build` vs `docker buildx`
+## 📚 About Boost & jh-toolkit
 
-When choosing between `docker build` and `docker buildx`, keep the following in mind:
+### Boost
 
-| Feature           | `docker build`                       | `docker buildx`                                                               |
-|-------------------|--------------------------------------|-------------------------------------------------------------------------------|
-| Architecture      | Host-only                            | Same-architecture only (**do NOT cross-build**, since Boost must be compiled) |
-| Optimization      | Full native (`-march=native`)        | Portable or emulated targets                                                  |
-| Speed             | ⚡️ Fast (native toolchain)           | 🐢 Slightly slower (due to metadata + context handling)                       |
-| Image Portability | ❌ Low (host-dependent instructions)  | ✅ High (portable across systems of the same architecture)                     |
-| Use Case          | Local development, profiling, tuning | Reproducible builds, CI/CD pipelines, multi-platform releases                 |
+* Requires **Boost ≥ 1.80** (due to `boost::json`)
+* Docker builds use Boost **1.88.0**
+* Local builds must ensure `boost_json` and `boost_system` are discoverable
 
-> 🧠 **Tip:** If your machine and your deployment target are exactly the same architecture (e.g., `x86-64-v3`), `docker build` will produce **smaller and faster** images.
-> Use `buildx` only when targeting multiple systems or publishing externally.
+### jh-toolkit
 
----
-
-## 📚 About Boost & JSON
-
-This project **requires Boost's `json` component**, which was introduced in **Boost 1.75+**, and considered stable from **1.80+**.
-
-If building **outside Docker**, you must:
-
-* Install **Boost ≥ 1.80** from [https://www.boost.org](https://www.boost.org)
-* Ensure `boost_system` and `boost_json` are discoverable via CMake
-
-You may use dynamic linking locally if you prefer smaller binaries.
+* Uses **POD module** from [`1.3.x-LTS`](https://github.com/JeongHan-Bae/JH-Toolkit)
+* ✅ Header-only and embedded at compile time
+* No dynamic linking needed
 
 ---
 
-## 🔧 About jh-toolkit
+## 🖥️ Native Build Option
 
-This project depends on [`jh-toolkit`](https://github.com/JeongHan-Bae/JH-Toolkit), licensed under Apache 2.0.
-The image uses the `1.3.x-LTS` branch with the **POD (Plain Old Data)** module, which is:
+Native builds are great for:
 
-* ✅ Fully template-based
-* ✅ Header-only
-* ✅ Compiled into your application
+* Intranet deployments
+* Minimal startup time
+* Dynamic linking with system-installed Boost
 
-📄 Full documentation:
-👉 [jh-toolkit POD Module](https://github.com/JeongHan-Bae/JH-Toolkit/blob/1.3.x-LTS/docs/pod.md)
-
-> If you wish to use the **full version** of `jh-toolkit`, follow the instructions in its documentation, and update your `CMakeLists.txt` and Dockerfile accordingly (switch from `-DTAR=POD` to full build).
-
----
-
-## 🖥️ Local Build (Native Compilation)
-
-Docker is convenient for uniform environments, but **native builds offer**:
-
-* Smaller local disk footprint
-* Better startup performance (no container layer)
-* Direct control over Boost dynamic/static linkage
-
-For **intranet deployments with high request concurrency**, it is **strongly recommended** to:
-
-* Build and deploy natively
-* Use system-installed Boost with dynamic linking
-* Run without Docker to reduce latency
+```bash
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release -DAPP=MyServer -DPORT=9000
+cmake --build .
+```
 
 ---
 
-## 📦 Summary
+## 🧼 Cleanup
+
+Both Dockerfiles clean up intermediate files, build artifacts, and temp downloads after installation to reduce image
+size.
+
+---
+
+## ✅ Summary
 
 | Method               | Build Tools | Boost             | Toolkit                | Image Size | Usage                      |
 |----------------------|-------------|-------------------|------------------------|------------|----------------------------|
@@ -162,8 +188,3 @@ For **intranet deployments with high request concurrency**, it is **strongly rec
 | `Dockerfile.runtime` | Staged      | Static            | POD                    | \~70 MB    | Production (Slim)          |
 | Native               | Manual      | Dynamic preferred | Optional (full or POD) | < app size | Intranet servers, embedded |
 
----
-
-## 🧼 Cleanup
-
-Both Dockerfiles clean up all sources after installation (CMake, Boost, jh-toolkit, build trees) to reduce final size.

@@ -38,6 +38,7 @@ using bulgogi::Request; /// @brief HTTP request
 using bulgogi::Response; /// @brief HTTP response
 using bulgogi::check_method; /// @brief Check HTTP method
 using bulgogi::set_json; /// @brief Set JSON response
+namespace cors = bulgogi::cors;
 
 /**
  * @page
@@ -140,7 +141,15 @@ REGISTER_VIEW(ping) {
 }
 
 REGISTER_VIEW(shutdown_server) {
-    if (!check_method(req, bulgogi::http::verb::post, res)) return;
+    if (!check_method(req, bulgogi::http::verb::post, res, cors::none)) return;
+
+    if(!bulgogi::ipv4::is_internal_network(remote_ip)){
+        set_json(res, {
+                {"error", "Access denied"},
+                {"reason", "Only 127.0.0.1 and private LANs are allowed"}
+        }, 403);
+        return;
+    }
 
     if (!g_should_exit.exchange(true)) {
         std::cout << "Called Exit\n";

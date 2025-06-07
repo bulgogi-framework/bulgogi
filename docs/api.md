@@ -103,20 +103,21 @@ Use this table to decide which macro to use:
 
 ---
 
-### 🧪 Handler Basics
+### 💪 Handler Basics & Security Context
 
-Each route receives:
-
-```c++
-void my_handler(const bulgogi::Request& req, bulgogi::Response& res);
-```
-
-Use utility functions to simplify logic:
+Handlers always accept:
 
 ```c++
-if (!bulgogi::check_method(req, http::verb::post, res)) return;
-auto obj = bulgogi::get_json_obj(req);
+void my_handler(const bulgogi::Request& req, bulgogi::Response& res, [[maybe_unused]] const std::string& remote_ip);
 ```
+
+The `remote_ip` provides the actual IPv4 address of the client.
+
+**Important:**
+
+* This is critical for validating shutdown/privileged access.
+* `remote_ip` may be omitted in function body, but optimizers will retain the signature.
+* IPv6 addresses are explicitly rejected for shutdown purposes.
 
 ---
 
@@ -169,13 +170,80 @@ using bulgogi::Request;   // HTTP request (string body)
 using bulgogi::Response;  // HTTP response
 ```
 
-### ✔️ Method Check
+### ✔️ Method Check (`check_method`)
 
 ```c++
-bool bulgogi::check_method(const Request& req, http::verb expected, Response& res);
+    inline bool check_method(const Request &req,
+                             std::initializer_list<http::verb> allowed_methods,
+                             Response &res,
+                             std::string_view allow_origin = "*",
+                             bool credentials = false)
 ```
 
-Returns `false` and responds with `405` JSON if mismatched.
+```c++
+    inline bool check_method(const Request &req,
+                             http::verb allowed_method,
+                             Response &res,
+                             std::string_view allow_origin = "*",
+                             bool credentials = false)
+```
+
+**Enhanced behavior (2025):**
+
+* Automatically handles `OPTIONS` requests with proper CORS headers
+* Rejects methods not listed, returning JSON error (`405`)
+* Fully integrated with `apply_cors()` — no need to call manually
+* Supports `credentials=true` enforcement
+* In `NO_CORS` mode, will reject options and cors requests
+
+---
+
+### 🌐 CORS Configuration (`apply_cors`)
+
+```c++
+bulgogi::apply_cors(res, "https://your-domain", {http::verb::post}, true);
+```
+
+New Features:
+
+* `allow_origin = null` or empty disables CORS completely
+* If `credentials = true`, wildcard origins (`*`) are disallowed
+* Preflight validation enforces method correctness
+* CORS rejection returns `403` or `500` JSON errors with reason
+
+---
+
+### 🔔 IPv4 Restrictions for Privileged Endpoints
+
+```c++
+bulgogi::ipv4::is_internal_network(remote_ip)
+```
+
+`bulgogi::ipv4` namespace also defines:
+
+```c++
+namespace bulgogi::ipv4{
+    is_self(const std::string &ip);
+    is_ipv6(const std::string &ip);
+    is_private_lan_ip(const std::string &ip);
+}
+```
+
+for easy access.
+
+**Shutdown is only allowed from:**
+
+* `127.0.0.1` (loop-back)
+* `0.0.0.0` (binding wildcard)
+* Private LANs:
+
+  * `10.0.0.0/8`
+  * `192.168.0.0/16`
+  * `172.16.0.0/12`
+
+All IPv6 and public IPv4 addresses are **rejected**.
+
+---
 
 ### 📤 Response Utilities
 
@@ -189,7 +257,6 @@ bulgogi::set_binary(res, raw_data, "dump.bin");
 ### 🌐 CORS & Redirect
 
 ```c++
-bulgogi::apply_cors(res);                          // Adds Access-Control-* headers
 bulgogi::set_redirect(res, "/home", 302);          // Redirects with Location
 ```
 
@@ -202,17 +269,19 @@ auto name = bulgogi::get_query_param(req, "q");    // Extracts ?q= from URL
 
 ---
 
-### ⚙️ `views.cpp` Custom Hooks
-
-You may optionally implement the following functions in `views.cpp` to add global logic:
+### 🌎 Custom Hooks (Optional)
 
 ```c++
 namespace views {
-    void init();   // Called once during startup
-    void atexit(); // Called once on shutdown
-    void check_head(const bulgogi::Request& req); // Called before CORS headers are applied
+    void init();        // On startup
+    void atexit();      // On shutdown
+    void check_head();  // Pre-CORS hook
 }
 ```
+
+* Use `check_head()` to enforce token-based or header auth globally
+* Throw to abort request with `401`
+
 
 #### 🔸 `void views::init()`
 
@@ -246,11 +315,6 @@ void views::check_head([[maybe_unused]] const bulgogi::Request& req) {
     // Example: throw std::runtime_error("Unauthorized") if missing Authorization
 }
 ```
-
-Called automatically in `bulgogi::apply_cors()`.
-
-* Throw an exception here to **block unauthorized requests**.
-* The framework will catch it and return a `401 Unauthorized` response automatically.
 
 ---
 
@@ -397,6 +461,13 @@ Also supports hashing, range access, and structured equality.
 
 All `jh::pod` types are compatible with `std::vector`, `std::unordered_map`, and Beast buffers.
 You get `memcpy` speed + full type safety.
+
+---
+
+## Notice
+
+> 📍 Always test handler behavior under CORS + method mismatch + IP rejection.  
+> ✅ Framework defaults are minimal; production logic should explicitly harden sensitive endpoints.
 
 ---
 

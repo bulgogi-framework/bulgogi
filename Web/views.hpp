@@ -12,7 +12,7 @@
 
 namespace views {
 
-    using HandlerFunc = void (*)(const bulgogi::Request &req, bulgogi::Response &res);
+    using HandlerFunc = void (*)(const bulgogi::Request &req, bulgogi::Response &res, const std::string &ip);
 
     // Declare global function map
     extern std::unordered_map<std::string, HandlerFunc> function_map;
@@ -31,13 +31,15 @@ namespace views {
      *   Use REGISTER_ROOT_VIEW(...) to register the root handler.
      */
 #define REGISTER_VIEW(...) \
-        void ROUTE_NAME(__VA_ARGS__)(const bulgogi::Request& req, bulgogi::Response& res); \
+        void ROUTE_NAME(__VA_ARGS__)(const bulgogi::Request& req, \
+                       bulgogi::Response& res, const std::string& remote_ip); \
         struct EXPAND(ROUTE_NAME(__VA_ARGS__), _registrar) { \
             EXPAND(ROUTE_NAME(__VA_ARGS__), _registrar)() { \
                 views::function_map[ROUTE_STR(__VA_ARGS__)] = ROUTE_NAME(__VA_ARGS__); \
             } \
         } EXPAND(ROUTE_NAME(__VA_ARGS__), _registrar_instance); \
-        void ROUTE_NAME(__VA_ARGS__)(const bulgogi::Request& req, bulgogi::Response& res)
+        void ROUTE_NAME(__VA_ARGS__)(const bulgogi::Request& req, \
+                       bulgogi::Response& res, [[maybe_unused]] const std::string& remote_ip)
 
     /**
      * @brief Register one or more URL paths for a single handler function.
@@ -70,14 +72,16 @@ namespace views {
      * - You may mix this with REGISTER_VIEW() for full flexibility.
      */
 #define REGISTER_VIEW_URLS(func_name, ...) \
-        void func_name(const bulgogi::Request& req, bulgogi::Response& res); \
+        void func_name(const bulgogi::Request& req, \
+                       bulgogi::Response& res, const std::string& remote_ip); \
         struct func_name##_alias_registrar { \
             func_name##_alias_registrar() { \
                 const char* paths[] = { __VA_ARGS__ }; \
                 for (const auto& p : paths) views::function_map[p] = func_name; \
             } \
         } func_name##_alias_registrar_instance; \
-        void func_name(const bulgogi::Request& req, bulgogi::Response& res)
+        void func_name(const bulgogi::Request& req, \
+                       bulgogi::Response& res, [[maybe_unused]] const std::string& remote_ip)
 
     /**
      * @brief Register the handler for the root URL path ("/").

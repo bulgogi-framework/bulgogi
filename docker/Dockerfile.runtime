@@ -2,6 +2,9 @@
 ARG COMPILER=clang
 ARG APP=BulgogiAPP
 ARG PORT=8080
+ARG TIMEOUT=10
+ARG CORS_MAX_AGE=86400
+ARG NO_CORS=OFF
 ARG CMAKE_VER=3.27.9
 ARG BOOST_VER=1.88.0
 ARG JH_BRANCH=1.3.x-LTS
@@ -12,6 +15,9 @@ LABEL stage="builder"
 ARG COMPILER
 ARG APP
 ARG PORT
+ARG TIMEOUT
+ARG CORS_MAX_AGE
+ARG NO_CORS
 ARG CMAKE_VER
 ARG BOOST_VER
 ARG JH_BRANCH
@@ -75,9 +81,14 @@ COPY ./ ./
 
 RUN cmake -G Ninja -B build \
     -DCMAKE_BUILD_TYPE=Release \
-    -DAPP=${APP} -DPORT=${PORT} \
+    -DAPP=${APP} \
+    -DPORT=${PORT} \
+    -DTIMEOUT=${TIMEOUT} \
+    -DCORS_MAX_AGE=${CORS_MAX_AGE} \
+    -DNO_CORS=${NO_CORS} \
     -DBoost_USE_STATIC_LIBS=ON \
     && cmake --build build
+
 
 # === Stage 2: Runtime image ===
 FROM ubuntu:22.04 AS runtime

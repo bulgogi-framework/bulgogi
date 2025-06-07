@@ -2,6 +2,10 @@
 ARG COMPILER=clang
 ARG APP=BulgogiAPP
 ARG PORT=8080
+ARG TIMEOUT=10
+ARG CORS_MAX_AGE=86400
+ARG NO_CORS=OFF
+
 
 # === Base image ===
 FROM ubuntu:22.04
@@ -11,6 +15,9 @@ LABEL authors="jeonghan-bae[bulgogi-framework organization]"
 ARG COMPILER
 ARG APP
 ARG PORT
+ARG TIMEOUT
+ARG CORS_MAX_AGE
+ARG NO_CORS
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -72,7 +79,11 @@ COPY ./ ./
 # === Build your project ===
 RUN cmake -G Ninja -B build \
     -DCMAKE_BUILD_TYPE=Release \
-    -DAPP=${APP} -DPORT=${PORT} \
+    -DAPP=${APP} \
+    -DPORT=${PORT} \
+    -DTIMEOUT=${TIMEOUT} \
+    -DCORS_MAX_AGE=${CORS_MAX_AGE} \
+    -DNO_CORS=${NO_CORS} \
     && cmake --build build
 
 # === Package and cleanup ===
