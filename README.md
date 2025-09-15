@@ -1,5 +1,7 @@
 <div align="center" style="margin-top: 20px; margin-bottom: -30px;">
-  <img src="https://raw.githubusercontent.com/bulgogi-framework/.github/main/res/img/Bulgogi.svg" alt="bulgogi logo" style="max-width: 100%; max-height: 1024px;">
+  <img src="https://raw.githubusercontent.com/bulgogi-framework/.github/main/res/img/Bulgogi.svg"
+       alt="bulgogi logo"
+       style="width: 256px; height: auto;">
 </div>
 
 <h1 align="center">Bulgogi</h1>
