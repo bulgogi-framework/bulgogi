@@ -464,6 +464,75 @@ You get `memcpy` speed + full type safety.
 
 ---
 
+## ⚙️ CMake Configuration
+
+The provided `CMakeLists.txt` allows limited customization via variables and options.
+You may override them at **configure time** (`cmake -DVAR=VALUE ..`).
+
+### 🔧 Overridable Variables
+
+| Variable       | Default | Description                                                  |
+|----------------|---------|--------------------------------------------------------------|
+| `APP`          | `APP`   | Executable and project name                                  |
+| `PORT`         | `8080`  | Compile-time server port (validated 1–65535)                 |
+| `TIMEOUT`      | `10`    | Request timeout (seconds)                                    |
+| `CORS_MAX_AGE` | `86400` | Cache duration for CORS preflight                            |
+| `NO_CORS`      | `OFF`   | Disable CORS handling (`add_compile_definitions(NO_CORS=1)`) |
+
+These are compiled in as `add_compile_definitions(...)`.
+
+---
+
+### ⚡ Compiler Flags
+
+* Defaults to **C++20**
+* `-march=native` is used if supported and not cross-compiling
+* Cross-compilation falls back to `-march=x86-64-v3`, `-march=armv8-a`, or `-march=armv7-a` depending on target
+* Debug builds add `-O2` for reasonable optimization
+
+---
+
+### 📦 Dependencies
+
+* **Boost**: `system`, `json` (required)
+* **jh-toolkit**: configurable level of support
+
+#### Toolkit Linking
+
+```cmake
+# Minimum dependency (default, header-only)
+target_link_libraries(${APP}
+    PRIVATE
+    jh::jh-toolkit-pod
+    ${Boost_LIBRARIES}
+)
+
+# If you need immutable_str or full runtime features:
+# target_link_libraries(${APP}
+#     PRIVATE
+#     jh::jh-toolkit-impl
+#     ${Boost_LIBRARIES}
+# )
+```
+
+* `jh::jh-toolkit-pod` → minimal dependency, pure plain-old-data utilities, see [`jh::pod`](https://github.com/JeongHan-Bae/JH-Toolkit/blob/main/docs/pod.md)
+* `jh::jh-toolkit` → pure headers except `immutable_str`
+* `jh::jh-toolkit-impl` → full implementation (includes [`jh::immutable_str`](https://github.com/JeongHan-Bae/JH-Toolkit/blob/main/docs/immutable_str.md))
+
+---
+
+### 🛠️ Adding Your Own Packages
+
+If your project depends on extra libraries, you can add your own `find_package(...)`
+and extend the final `target_link_libraries(${APP} ...)` block.
+
+```cmake
+find_package(OpenSSL REQUIRED)
+target_link_libraries(${APP} PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+```
+
+---
+
 ## Notice
 
 > 📍 Always test handler behavior under CORS + method mismatch + IP rejection.  

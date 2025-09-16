@@ -24,7 +24,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # === Common system dependencies ===
 RUN apt-get update && apt-get install -y \
     wget git curl pkg-config ca-certificates \
-    build-essential cmake ninja-build \
+    build-essential ninja-build libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # === Conditionally install compiler toolchain ===
@@ -62,13 +62,13 @@ RUN wget https://github.com/boostorg/boost/releases/download/boost-${BOOST_VER}/
     && ./b2 -j${m} install toolset=${COMPILER} \
     && cd / && rm -rf /tmp/boost
 
-# === Build jh-toolkit POD ===
+# === Build jh-toolkit ===
 ARG JH_BRANCH=1.3.x-LTS
 WORKDIR /tmp/build
 RUN git clone --branch ${JH_BRANCH} --depth=1 https://github.com/JeongHan-Bae/jh-toolkit.git
 
 WORKDIR /tmp/build/jh-toolkit
-RUN cmake -G Ninja -B build-pod -DCMAKE_BUILD_TYPE=Release -DTAR=POD \
+RUN cmake -G Ninja -B build-pod -DCMAKE_BUILD_TYPE=Release -DTAR=POD,ALL \
     && cmake --build build-pod \
     && cmake --install build-pod
 

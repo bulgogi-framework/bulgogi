@@ -110,6 +110,7 @@ add_executable(${APP}
 # ==== Include & Link ====
 include_directories(${Boost_INCLUDE_DIRS})
 
+# Use jh::jh-toolkit-impl if you need full jh-toolkit support
 target_link_libraries(${APP}
         PRIVATE
         jh::jh-toolkit-pod

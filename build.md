@@ -32,12 +32,20 @@ docker buildx build \
   --platform linux/amd64 \
   -t bulgogi-dev:latest \
   -f docker/Dockerfile \
+  --load \
   .
 ```
 
 > ✅ Use `--build-arg COMPILER=gcc` to switch toolchains (default is `clang`).  
-> ✅ Use `--platform linux/arm64` for Apple Silicon or ARM servers.
-
+> ✅ On Apple Silicon or ARM servers, specify `--platform linux/arm64` (host and target **must** match).
+>
+> ⚠️ **Important (Must-Read):**
+>
+> * You **must** use `--load` — without it, `buildx` will not produce a locally runnable image.
+> * You **must build on a 64-bit host with the same architecture as the target**:
+>
+>   * Cross-architecture builds **are not supported** (Boost will fail to compile).
+>   * 32-bit hosts **are not supported** (`jh-toolkit` refuses to compile).
 ### ▶️ Run
 
 ```bash
@@ -66,8 +74,14 @@ docker buildx build \
   -f docker/Dockerfile.runtime \
   --build-arg APP=BulgogiAPP \
   --build-arg PORT=8080 \
+  --load \
   .
 ```
+
+> ⚠️ **Important (Must-Read):**
+>
+> * `--load` is mandatory for a usable local image.
+> * Builds must run on a **64-bit host with the same architecture as the target** — no exceptions.
 
 ### ▶️ Run
 
@@ -151,9 +165,25 @@ Relative paths like `COPY ./ ./` rely on the entire root context.
 
 ### jh-toolkit
 
-* Uses **POD module** from [`1.3.x-LTS`](https://github.com/JeongHan-Bae/JH-Toolkit)
-* ✅ Header-only and embedded at compile time
-* No dynamic linking needed
+* Uses [`1.3.x-LTS`](https://github.com/JeongHan-Bae/JH-Toolkit/tree/1.3.x-LTS), currently **1.3.2**
+* **Two targets are built in Docker**:
+
+    * **`POD`**
+
+        * Header-only module
+        * This is the *true dependency* of bulgogi
+    * **`ALL`**
+
+        * Includes both `jh-toolkit` headers and `jh-toolkit-impl`
+        * Provides runtime implementation (e.g. `jh::immutable_str`)
+        * Previously forced `-march=native`, now supports **same-arch cross-compilation**
+* ✅ Both are prebuilt in the Docker environment for maximum compatibility
+* ✅ Framework users can choose:
+
+    * Link only against **`jh::jh-toolkit-pod`** (default, minimal)
+    * Or explicitly depend on **`jh::jh-toolkit-impl`** if extra runtime features are needed
+
+* ℹ️ For detailed CMake usage examples (e.g. choosing `jh-toolkit-pod` vs `jh-toolkit-impl`), please refer to the **[API Guide](docs/api.md)**.
 
 ---
 
@@ -180,11 +210,11 @@ size.
 
 ---
 
-## ✅ Summary
+## ✅ Summary (Updated)
 
-| Method               | Build Tools | Boost             | Toolkit                | Image Size | Usage                      |
-|----------------------|-------------|-------------------|------------------------|------------|----------------------------|
-| `Dockerfile`         | Full        | Dynamic           | POD                    | \~1.4 GB   | Development, Debug         |
-| `Dockerfile.runtime` | Staged      | Static            | POD                    | \~70 MB    | Production (Slim)          |
-| Native               | Manual      | Dynamic preferred | Optional (full or POD) | < app size | Intranet servers, embedded |
+| Method               | Build Tools | Boost             | Toolkit                  | Image Size | Usage                                |
+|----------------------|-------------|-------------------|--------------------------|------------|--------------------------------------|
+| `Dockerfile`         | Full        | Dynamic           | `POD,ALL`                | \~1.4 GB   | Development, Debug, Cross-compile OK |
+| `Dockerfile.runtime` | Staged      | Static            | `POD,ALL`                | \~70 MB    | Production (Slim)                    |
+| Native               | Manual      | Dynamic preferred | Optional (`POD` / `ALL`) | < app size | Intranet servers, embedded systems   |
 
